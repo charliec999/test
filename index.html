@@ -350,26 +350,26 @@
         <main class="max-w-7xl mx-auto px-4 py-4">
             <div id="home-tab" class="tab-content">
     <div class="flex gap-4">
-        <!-- Left Column - Activity -->
-        <div class="w-52">
+        <!-- Left Column - Recent Buys -->
+        <div class="w-52 bg-gray-800/20 p-2 rounded-lg">
             <h2 class="text-lg font-bold text-blue-300 mb-2">Recent Buys</h2>
-            <div id="recent-buys-list" class="max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
-                <!-- Buys populated here -->
+            <div id="recent-buys-list" class="max-h-[600px] overflow-y-auto pr-2">
+                <!-- Buys will be populated here -->
             </div>
         </div>
 
-        <!-- Main Content - Markets -->
+        <!-- Main Content Area -->
         <div class="flex-1">
             <div id="markets-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Markets populated here -->
+                <!-- Markets will be populated here -->
             </div>
         </div>
 
-        <!-- Right Column - Activity -->
-        <div class="w-52">
+        <!-- Right Column - Recent Sells -->
+        <div class="w-52 bg-gray-800/20 p-2 rounded-lg">
             <h2 class="text-lg font-bold text-blue-300 mb-2">Recent Sells</h2>
-            <div id="recent-sells-list" class="max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
-                <!-- Sells populated here -->
+            <div id="recent-sells-list" class="max-h-[600px] overflow-y-auto pr-2">
+                <!-- Sells will be populated here -->
             </div>
         </div>
     </div>
@@ -720,6 +720,7 @@ auth.onAuthStateChanged(async (user) => {
             await getMarkets();
             await updateMarkets();
             await updatePortfolioDisplays();
+            await updateRecentActivity(); 
         } else {
             console.log('User signed out');
             
@@ -2561,6 +2562,7 @@ document.querySelectorAll('[data-tab]').forEach(button => {
             switch(tabName) {
                 case 'home':
                     await updateMarkets();
+                    await updateRecentActivity();
                     break;
                 case 'portfolio':
                     await updatePortfolioDisplays();
@@ -2638,13 +2640,80 @@ async function placeBet(marketId, position) {
         showSuccessMessage('Bet placed successfully!');
         await updatePortfolioDisplays();
         await updateMarkets();
+        await updateRecentActivity();
 
     } catch (error) {
         console.error('Error placing bet:', error);
         showErrorMessage(error.message || 'Failed to place bet');
     }
 }
+async function updateRecentActivity() {
+    console.log('Updating recent activity...'); // Debug log
+    try {
+        const betsSnapshot = await db.collection('bets')
+            .orderBy('timestamp', 'desc')
+            .limit(10)
+            .get();
 
+        console.log('Found bets:', betsSnapshot.size); // Debug log
+
+        const buys = [];
+        const sells = [];
+
+        betsSnapshot.docs.forEach(doc => {
+            const bet = doc.data();
+            const market = markets.find(m => m.id === bet.marketId);
+            console.log('Processing bet:', bet); // Debug log
+            
+            if (!market) {
+                console.log('Market not found for bet:', bet.marketId);
+                return;
+            }
+
+            const activityHtml = `
+                <div class="bg-gray-800/80 rounded-lg p-2 mb-1.5">
+                    <div class="flex items-center space-x-2">
+                        <img src="${market.image}" class="w-8 h-8 rounded object-cover flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs text-blue-300 font-medium truncate">${market.title}</div>
+                            <div class="text-xs text-gray-400">
+                                <span class="${bet.position === 'yes' ? 'text-green-400' : 'text-red-400'}">${bet.position}</span>
+                                <span class="mx-1">${(bet.price * 100).toFixed(0)}¢</span>
+                                <span class="text-gray-500 text-xs">${formatTimeAgo(bet.timestamp)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (bet.type === 'buy') {
+                buys.push(activityHtml);
+            } else {
+                sells.push(activityHtml);
+            }
+        });
+
+        const buysList = document.getElementById('recent-buys-list');
+        const sellsList = document.getElementById('recent-sells-list');
+
+        if (buysList) {
+            buysList.innerHTML = buys.length ? buys.join('') : 
+                '<div class="text-gray-400 text-center p-2">No recent buys</div>';
+        } else {
+            console.log('Buys list element not found'); // Debug log
+        }
+
+        if (sellsList) {
+            sellsList.innerHTML = sells.length ? sells.join('') : 
+                '<div class="text-gray-400 text-center p-2">No recent sells</div>';
+        } else {
+            console.log('Sells list element not found'); // Debug log
+        }
+
+    } catch (error) {
+        console.error('Error updating activity:', error);
+    }
+}
 function calculateNetworth(userData = null) {
     // If no userData passed, use current portfolio
     if (!userData) {
