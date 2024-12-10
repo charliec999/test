@@ -26,6 +26,17 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     
     <style>
+        @media screen and (max-width: 1280px) {
+    .grid-cols-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .w-52 {
+        width: 48px;
+    }
+}
         body {
             background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
             color: #e2e8f0;
@@ -338,6 +349,31 @@
 
         <main class="max-w-7xl mx-auto px-4 py-4">
             <div id="home-tab" class="tab-content">
+    <div class="flex gap-4">
+        <!-- Left Column - Activity -->
+        <div class="w-52">
+            <h2 class="text-lg font-bold text-blue-300 mb-2">Recent Buys</h2>
+            <div id="recent-buys-list" class="max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
+                <!-- Buys populated here -->
+            </div>
+        </div>
+
+        <!-- Main Content - Markets -->
+        <div class="flex-1">
+            <div id="markets-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Markets populated here -->
+            </div>
+        </div>
+
+        <!-- Right Column - Activity -->
+        <div class="w-52">
+            <h2 class="text-lg font-bold text-blue-300 mb-2">Recent Sells</h2>
+            <div id="recent-sells-list" class="max-h-[calc(100vh-220px)] overflow-y-auto pr-2">
+                <!-- Sells populated here -->
+            </div>
+        </div>
+    </div>
+</div>
                
                 
                 <div id="markets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
